@@ -1,15 +1,15 @@
 var index = {};
 
+const MAX_ITEMS = 10;
+
 fetch('items.json')
     .then((response) => response.json())
-    .then((json) => index = convertToIndex(json));
-
-//const json = JSON.parse(
-//  await readFile(
-//    new URL('./items.json', import.meta.url)
-//  )
-//);
-//console.log(json);
+    .then((json) => {
+        index = convertToIndex(json);
+        const items = index.slice(0, MAX_ITEMS);
+        console.log(items);
+        render(items);
+    });
 
 const ItemType = {
     "CONSUMABLE": "CONSUMABLE",
@@ -39,5 +39,40 @@ function convertToItem(it, itemType) {
 }
 
 function find(query) {
-    return index.filter(it => it.normalizedName.includes(query));
+    const tokens = query.split(/[\s,-]+/);
+    return tokens.reduce((items, token) => {
+        return items.filter(it => it.normalizedName.includes(token));
+    }, index);
+}
+
+function onSearchChanged(event) {
+    const query = event.target.value.toLowerCase();
+    const found = find(query);
+    const trimmed = found.slice(0, MAX_ITEMS);
+    render(trimmed);
+}
+
+function render(items) {
+    document.getElementById("content").innerHTML = createHtml(items);
+}
+
+function createHtml(items) {
+    return `<table>
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td>Price</td>
+                <td>type</td>
+            </tr>
+        </thead>
+        <tbody>
+            ${items.map((item) => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.price}</td>
+                    <td>${item.type}</td>
+                </tr>
+            `).join("")}
+        </tbody>
+    </table>`;
 }
